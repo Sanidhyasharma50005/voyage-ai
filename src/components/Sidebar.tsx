@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { BrandLogo } from './BrandLogo';
 
+import { useAuth } from '@/context/AuthContext';
+
 export type NavTab =
   | 'dashboard'
   | 'explore'
@@ -44,6 +46,7 @@ export function Sidebar({
   onOpenAiPlanner,
   onOpenPromo,
 }: SidebarProps) {
+  const { isPro } = useAuth();
   const navItems = [
     { id: 'dashboard' as NavTab, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'explore' as NavTab, label: 'Explore Places', icon: Compass },
@@ -128,28 +131,36 @@ export function Sidebar({
 
       {/* Bottom: 50% Promo Box from Image 2 & Logout */}
       <div className="space-y-4 pt-4 border-t border-slate-800/60">
-        {/* Promo Card from Image 2 */}
+        {/* Promo / Pro Plan Card */}
         <div
           onClick={onOpenPromo}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-lime-400/10 via-slate-900 to-slate-950 border border-lime-400/20 p-4 cursor-pointer hover:border-lime-400/50 transition-all group"
+          className={`relative overflow-hidden rounded-2xl border p-4 cursor-pointer transition-all group ${
+            isPro
+              ? 'bg-gradient-to-br from-lime-500/15 via-[#111827] to-[#0a0e1a] border-[#d4f938]/40 hover:border-[#d4f938]'
+              : 'bg-gradient-to-br from-lime-400/10 via-slate-900 to-slate-950 border-lime-400/20 hover:border-lime-400/50'
+          }`}
         >
           <div className="flex items-start justify-between gap-2">
             <div>
               <div className="inline-flex items-center gap-1 text-[11px] font-bold text-[#d4f938] uppercase tracking-wider mb-1">
-                <span>Special Promo</span>
+                <span>{isPro ? '⭐ Active Status' : 'Special Promo'}</span>
               </div>
               <h4 className="text-sm font-bold text-white leading-tight">
-                50% Discount!
+                {isPro ? 'Voyage Pro Member' : '50% Off Pro Pass'}
               </h4>
               <p className="text-[11px] text-slate-400 mt-1 leading-snug line-clamp-2">
-                Get a discount on certain days and don't miss it.
+                {isPro
+                  ? 'Unlimited AI & Cloud PostgreSQL Sync Active'
+                  : 'Upgrade for ₹299: Unlimited AI & Cloud Sync'}
               </p>
             </div>
 
             {/* Mascot Icon & Circular CTA Arrow */}
             <div className="flex flex-col items-center justify-between h-full pt-1">
-              <span className="text-xl">🎒</span>
-              <div className="w-7 h-7 rounded-full bg-[#f97316] text-white flex items-center justify-center mt-2 shadow-md group-hover:translate-x-0.5 transition-transform">
+              <span className="text-xl">{isPro ? '👑' : '🎒'}</span>
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center mt-2 shadow-md group-hover:translate-x-0.5 transition-transform ${
+                isPro ? 'bg-[#d4f938] text-black' : 'bg-[#f97316] text-white'
+              }`}>
                 <ArrowRight className="w-3.5 h-3.5" />
               </div>
             </div>

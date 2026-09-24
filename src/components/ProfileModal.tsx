@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   User,
@@ -15,9 +15,11 @@ import {
   Edit3,
   BookmarkCheck,
   Camera,
-  LogOut
+  LogOut,
+  Zap,
+  LogIn
 } from 'lucide-react';
-import { SavedTrip } from '@/types/travel';
+import { useAuth } from '@/context/AuthContext';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -27,6 +29,7 @@ interface ProfileModalProps {
   savedTripsCount: number;
   favoritesCount: number;
   onViewTrips: () => void;
+  onOpenProModal?: () => void;
 }
 
 export function ProfileModal({
@@ -37,34 +40,69 @@ export function ProfileModal({
   savedTripsCount,
   favoritesCount,
   onViewTrips,
+  onOpenProModal,
 }: ProfileModalProps) {
+  const { user, profile, isPro, signOut, updateProfileName, setIsAuthModalOpen } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [nameInput, setNameInput] = useState(travelerName);
-  const [emailInput, setEmailInput] = useState('sanidhya@voyage.in');
-  const [locationInput, setLocationInput] = useState('New Delhi, India');
-  const [bioInput, setBioInput] = useState(
-    'Passionate backpacker exploring the hidden gems of India, from high Himalayan passes to serene coastal backwaters. Voyage AI curator.'
+  const [nameInput, setNameInput] = useState(
+    profile?.full_name || user?.user_metadata?.full_name || travelerName
   );
+  const [locationInput, setLocationInput] = useState(profile?.home_city || 'New Delhi, India');
+  const [bioInput, setBioInput] = useState(
+    profile?.bio || 'Passionate backpacker exploring the hidden gems of India, from high Himalayan passes to serene coastal backwaters.'
+  );
+
+  useEffect(() => {
+    if (profile?.full_name) {
+      setNameInput(profile.full_name);
+    } else if (user?.user_metadata?.full_name) {
+      setNameInput(user.user_metadata.full_name);
+    }
+    if (profile?.home_city) {
+      setLocationInput(profile.home_city);
+    }
+  }, [profile, user]);
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (nameInput.trim()) {
       onUpdateName(nameInput.trim());
+      await updateProfileName(nameInput.trim());
     }
     setIsEditing(false);
   };
 
+  const handleSignOut = async () => {
+    await signOut();
+    onClose();
+  };
+
+  const avatarSrc =
+    profile?.avatar_url ||
+    user?.user_metadata?.avatar_url ||
+    user?.user_metadata?.picture ||
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80';
+
+  const userDisplayName =
+    profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || travelerName;
+
+  const userEmail = user?.email || 'Guest Explorer (Not logged in)';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
       <div className="relative w-full max-w-2xl bg-[#0d1322] border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden my-8 flex flex-col">
         {/* Cover Background Banner */}
         <div className="relative h-36 bg-gradient-to-r from-cyan-900/60 via-slate-900 to-emerald-950/60 p-6 flex items-start justify-between border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono uppercase bg-[#d4f938] text-black font-extrabold px-2.5 py-0.5 rounded-full">
-              Verified Explorer
+            <span className={`text-[10px] font-mono uppercase font-extrabold px-2.5 py-0.5 rounded-full ${
+              isPro ? 'bg-[#d4f938] text-black shadow-md' : 'bg-slate-800 text-slate-300 border border-slate-700'
+            }`}>
+              {isPro ? '⭐ PRO MEMBER' : 'FREE EXPLORER'}
             </span>
-            <span className="text-xs text-slate-300 font-mono">Member since 2024</span>
+            <span className="text-xs text-slate-300 font-mono">
+              {user ? `Connected via ${user.app_metadata.provider === 'google' ? 'Google' : 'Email'}` : 'Local Session'}
+            </span>
           </div>
 
           <button
@@ -81,7 +119,7 @@ export function ProfileModal({
             <div className="flex items-end gap-4">
               <div className="relative w-24 h-24 rounded-full ring-4 ring-[#0d1322] overflow-hidden bg-gradient-to-tr from-amber-400 to-rose-500 p-0.5 shadow-xl">
                 <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80"
+                  src={avatarSrc}
                   alt="Profile Avatar"
                   className="w-full h-full object-cover rounded-full"
                 />
@@ -97,38 +135,64 @@ export function ProfileModal({
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-2xl font-extrabold text-white leading-tight">
-                    {travelerName}
+                    {userDisplayName}
                   </h2>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-[#d4f938]/20 text-[#d4f938] border border-[#d4f938]/30 font-bold font-mono">
-                    PRO
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-bold font-mono ${
+                    isPro
+                      ? 'bg-[#d4f938]/20 text-[#d4f938] border border-[#d4f938]/40'
+                      : 'bg-slate-800 text-slate-400 border border-slate-700'
+                  }`}>
+                    {isPro ? 'PRO' : 'FREE'}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>{locationInput}</span>
+                <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
+                  <span className="flex items-center gap-1">
+                    <Mail className="w-3 h-3 text-cyan-400" />
+                    <span>{userEmail}</span>
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-emerald-400" />
+                    <span>{locationInput}</span>
+                  </span>
                 </p>
               </div>
             </div>
 
-            <button
-              onClick={() => {
-                if (isEditing) handleSave();
-                else setIsEditing(true);
-              }}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors self-start sm:self-auto border border-slate-700"
-            >
-              {isEditing ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-[#d4f938]" />
-                  <span>Save Profile</span>
-                </>
-              ) : (
-                <>
-                  <Edit3 className="w-3.5 h-3.5 text-slate-300" />
-                  <span>Edit Profile</span>
-                </>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              {!isPro && onOpenProModal && (
+                <button
+                  onClick={() => {
+                    onClose();
+                    onOpenProModal();
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-lime-400/20 to-emerald-400/20 hover:from-lime-400/30 hover:to-emerald-400/30 text-xs font-bold text-[#d4f938] border border-[#d4f938]/40 flex items-center gap-1.5 transition-all shadow-sm"
+                >
+                  <Zap className="w-3.5 h-3.5 text-[#d4f938]" />
+                  <span>Get Pro (₹299)</span>
+                </button>
               )}
-            </button>
+
+              <button
+                onClick={() => {
+                  if (isEditing) handleSave();
+                  else setIsEditing(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors border border-slate-700"
+              >
+                {isEditing ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-[#d4f938]" />
+                    <span>Save Profile</span>
+                  </>
+                ) : (
+                  <>
+                    <Edit3 className="w-3.5 h-3.5 text-slate-300" />
+                    <span>Edit Profile</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Edit Form or Bio View */}
@@ -214,7 +278,7 @@ export function ProfileModal({
                 <Award className="w-4 h-4" />
               </div>
               <span className="text-lg font-bold text-[#d4f938] font-mono block">
-                Level 5
+                {isPro ? 'Pro Level' : 'Level 3'}
               </span>
               <span className="text-[10px] text-slate-400 uppercase tracking-wider">
                 Explorer Rank
@@ -240,23 +304,36 @@ export function ProfileModal({
               <span className="px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
                 🍛 Regional Street Foodie
               </span>
-              <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/15 text-purple-300 border border-purple-500/30">
-                🤖 AI Itinerary Curator
-              </span>
+              {isPro && (
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/40 font-mono">
+                  💎 Verified Pro Explorer
+                </span>
+              )}
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-            <button
-              onClick={() => {
-                alert('Voyage Pro is currently running in local mode.');
-              }}
-              className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1.5 font-medium"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Switch Account</span>
-            </button>
+            {user ? (
+              <button
+                onClick={handleSignOut}
+                className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1.5 font-medium transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  onClose();
+                  setIsAuthModalOpen(true);
+                }}
+                className="text-xs text-[#d4f938] hover:underline flex items-center gap-1.5 font-medium"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In to Cloud Account</span>
+              </button>
+            )}
 
             <button
               onClick={() => {

@@ -60,3 +60,49 @@
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.07);
 }
+
+/* Custom scrollbar for containers with .custom-scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* fadeIn animation (used across modals, toasts, advisor panels) */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out both;
+}
+
+/* slide-in-from-top animation (used by search dropdown) */
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-slideInFromTop {
+  animation: slideInFromTop 0.15s ease-out both;
+}

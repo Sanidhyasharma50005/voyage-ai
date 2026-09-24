@@ -146,7 +146,7 @@ export function StationSearchInput({
                             <span className="text-sm font-medium text-white truncate">
                               {st.n}
                             </span>
-                            <span className="text-xs font-mono font-bold px-1.5 py-0.2 rounded bg-slate-800 text-[#d4f938]">
+                            <span className="text-xs font-mono font-bold px-1.5 py-0.5 rounded bg-slate-800 text-[#d4f938]">
                               {st.c}
                             </span>
                           </div>

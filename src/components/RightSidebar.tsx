@@ -60,7 +60,7 @@ export function RightSidebar({
             setWeather({
               temp: Math.round(data.current_weather.temperature),
               windSpeed: Math.round(data.current_weather.windspeed),
-              condition: data.current_weather.weathercode < 3 ? 'Sunny & Clear' : 'Partly Cloudy',
+              condition: data.current_weather.weathercode < 2 ? 'Sunny & Clear' : 'Partly Cloudy',
               loading: false,
             });
           }
@@ -122,7 +122,7 @@ export function RightSidebar({
               Bookings & Trips
             </h3>
             {savedTrips.length > 0 && (
-              <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-[#d4f938] text-black font-bold font-mono">
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#d4f938] text-black font-bold font-mono">
                 {savedTrips.length}
               </span>
             )}
@@ -222,7 +222,7 @@ export function RightSidebar({
             <Train className="w-4 h-4 text-amber-400" />
             <span>Train Booking Advisor</span>
           </div>
-          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-cyan-500/20 text-cyan-300 font-bold">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold">
             Real IRCTC
           </span>
         </div>

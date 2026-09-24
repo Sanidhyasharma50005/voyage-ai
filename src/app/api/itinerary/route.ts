@@ -100,7 +100,7 @@ function generateSmartItinerary(
       'Respect modest dress guidelines at religious shrines: cover shoulders and knees.',
     ],
     transportTips:
-      'Book Indian Railways (IRCTC) trains 120 days in advance. For local transit, use Metro where available (Delhi, Kochi, Bengaluru) or government prepaid auto booths at railway stations.',
+      'Book Indian Railways (IRCTC) trains 60 days in advance (effective Nov 1, 2024). For local transit, use Metro where available (Delhi, Kochi, Bengaluru) or government prepaid auto booths at railway stations.',
   };
 }
 

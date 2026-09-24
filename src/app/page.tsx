@@ -10,11 +10,15 @@ import { AiPlannerModal } from '@/components/AiPlannerModal';
 import { DestinationDetailModal } from '@/components/DestinationDetailModal';
 import { ProfileModal } from '@/components/ProfileModal';
 import { SavedTripModal } from '@/components/SavedTripModal';
+import { AuthModal } from '@/components/AuthModal';
+import { ProPlanModal } from '@/components/ProPlanModal';
 import { TrainBookingAdvisor } from '@/components/TrainBookingAdvisor';
 import { StaysBookingAdvisor } from '@/components/StaysBookingAdvisor';
 import { DESTINATIONS } from '@/data/destinations';
 import { searchDestinations, SearchResult } from '@/lib/searchEngine';
 import { Destination, DestinationCategory, SavedTrip, TripPlan } from '@/types/travel';
+import { useAuth } from '@/context/AuthContext';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import {
   Sparkles,
   Navigation2,
@@ -136,7 +140,12 @@ export default function HomePage() {
   const [favorites, setFavorites] = useState<string[]>(['kerala', 'goa', 'kashmir']);
   const [travelerName, setTravelerName] = useState('SANIDHYA');
 
-  // Saved Trips state (FIX PROBLEM 3)
+  // Auth & Database Context
+  const { user, profile, isPro, isAuthModalOpen, setIsAuthModalOpen } = useAuth();
+  const [isProModalOpen, setIsProModalOpen] = useState(false);
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+
+  // Saved Trips state (Direct PostgreSQL + Guest LocalStorage fallback)
   const [savedTrips, setSavedTrips] = useState<SavedTrip[]>(DEFAULT_SAVED_TRIPS);
   const [selectedSavedTrip, setSelectedSavedTrip] = useState<SavedTrip | null>(null);
   const [isSavedTripModalOpen, setIsSavedTripModalOpen] = useState(false);
@@ -155,9 +164,10 @@ export default function HomePage() {
   // User Geolocation state for "Near Me" (Default to Gwalior coordinates: 26.2298, 78.1734)
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>({ lat: 26.2298, lon: 78.1734 });
 
-  // On mount: initiate GPS Radar automatically and load user preferences
+  // On mount or user change: load itineraries from PostgreSQL or localStorage
   useEffect(() => {
     handleRequestLocation();
+
     try {
       const savedFavs = localStorage.getItem('voyage_favs');
       if (savedFavs) {
@@ -167,15 +177,52 @@ export default function HomePage() {
       if (savedName) {
         setTravelerName(savedName);
       }
-      const storedTrips = localStorage.getItem('voyage_saved_trips');
-      if (storedTrips) {
-        const parsed = JSON.parse(storedTrips);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setSavedTrips(parsed);
+    } catch {}
+
+    // If authenticated, load directly from PostgreSQL public.itineraries with RLS
+    if (user) {
+      async function loadDatabaseItineraries() {
+        try {
+          const { data, error } = await supabase
+            .from('itineraries')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (!error && data && data.length > 0) {
+            const mapped: SavedTrip[] = data.map((row: any) => ({
+              id: row.id,
+              destinationId: row.destination_id,
+              destinationName: row.destination_name,
+              title: row.title,
+              daysCount: row.days_count,
+              budgetTier: row.budget_tier,
+              travelStyle: row.travel_style,
+              totalCost: Number(row.total_cost),
+              createdAt: row.created_at,
+              dates: row.dates,
+              imageUrl: row.image_url || 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=1000&q=80',
+              plan: row.plan_data as TripPlan,
+            }));
+            setSavedTrips(mapped);
+          }
+        } catch (err) {
+          console.warn('Error loading cloud itineraries:', err);
         }
       }
-    } catch {}
-  }, []);
+      loadDatabaseItineraries();
+    } else {
+      // Guest mode: load from localStorage
+      try {
+        const storedTrips = localStorage.getItem('voyage_saved_trips');
+        if (storedTrips) {
+          const parsed = JSON.parse(storedTrips);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setSavedTrips(parsed);
+          }
+        }
+      } catch {}
+    }
+  }, [user, supabase]);
 
   // Save favorites
   const toggleFavorite = (id: string) => {
@@ -188,40 +235,99 @@ export default function HomePage() {
     });
   };
 
-  // Save generated trip to state & localStorage (FIX PROBLEM 3)
-  const handleSaveTrip = (
+  // Save generated trip to Supabase PostgreSQL or LocalStorage (Bug 6 Fix: Direct DB call)
+  const handleSaveTrip = async (
     plan: TripPlan,
     destination: Destination,
     days: number,
     budgetTier: 'budget' | 'comfort' | 'luxury'
   ) => {
-    const newTrip: SavedTrip = {
+    const formattedDates = `${days} Days (${destination.bestSeason.split('(')[0].split('&')[0].trim()})`;
+    const title = plan.title || `${days}-Day ${budgetTier.toUpperCase()} Voyage: ${destination.name.split(' ')[0]}`;
+    const totalCost = plan.totalEstimatedCost || (destination.dailyCostBudget * days);
+
+    if (user) {
+      // Authenticated: insert directly into Supabase public.itineraries table
+      try {
+        const { data, error } = await supabase
+          .from('itineraries')
+          .insert({
+            user_id: user.id,
+            destination_id: destination.id,
+            destination_name: destination.name.split('&')[0].trim(),
+            title,
+            days_count: days,
+            budget_tier: budgetTier,
+            travel_style: 'solo',
+            total_cost: totalCost,
+            dates: formattedDates,
+            image_url: destination.imageUrl,
+            plan_data: plan,
+          })
+          .select()
+          .single();
+
+        if (!error && data) {
+          const newTrip: SavedTrip = {
+            id: data.id,
+            destinationId: data.destination_id,
+            destinationName: data.destination_name,
+            title: data.title,
+            daysCount: data.days_count,
+            budgetTier: data.budget_tier,
+            travelStyle: data.travel_style,
+            totalCost: Number(data.total_cost),
+            createdAt: data.created_at,
+            dates: data.dates,
+            imageUrl: data.image_url || destination.imageUrl,
+            plan: data.plan_data as TripPlan,
+          };
+          setSavedTrips((prev) => [newTrip, ...prev]);
+          setSaveToast(`🎉 Cloud Synced! Your ${days}-day plan for ${destination.name.split(' ')[0]} is saved to PostgreSQL!`);
+          setTimeout(() => setSaveToast(null), 5000);
+          return;
+        }
+      } catch (err) {
+        console.warn('Direct database insert failed, falling back to local state:', err);
+      }
+    }
+
+    // Guest fallback: save to local state & localStorage
+    const localTrip: SavedTrip = {
       id: 'trip_' + Date.now(),
       destinationId: destination.id,
       destinationName: destination.name.split('&')[0].trim(),
-      title: plan.title || `${days}-Day ${budgetTier.toUpperCase()} Voyage: ${destination.name.split(' ')[0]}`,
+      title,
       daysCount: days,
       budgetTier: budgetTier,
       travelStyle: 'solo',
-      totalCost: plan.totalEstimatedCost || (destination.dailyCostBudget * days),
+      totalCost,
       createdAt: new Date().toISOString(),
-      dates: `${days} Days (${destination.bestSeason.split('(')[0].split('&')[0].trim()})`,
+      dates: formattedDates,
       imageUrl: destination.imageUrl,
-      plan: plan,
+      plan,
     };
 
-    const updated = [newTrip, ...savedTrips.filter((t) => t.id !== newTrip.id)];
+    const updated = [localTrip, ...savedTrips.filter((t) => t.id !== localTrip.id)];
     setSavedTrips(updated);
     try {
       localStorage.setItem('voyage_saved_trips', JSON.stringify(updated));
     } catch {}
 
-    setSaveToast(`🎉 Saved! Your ${days}-day itinerary for ${destination.name.split(' ')[0]} is now in Bookings & My Itineraries!`);
+    setSaveToast(`🎉 Saved locally! Sign in to sync your ${days}-day itinerary to the cloud.`);
     setTimeout(() => setSaveToast(null), 5000);
   };
 
-  // Delete saved trip
-  const handleDeleteTrip = (id: string) => {
+  // Delete saved trip (PostgreSQL if authenticated, localStorage if guest)
+  const handleDeleteTrip = async (id: string) => {
+    if (user && !id.startsWith('trip_')) {
+      try {
+        await supabase.from('itineraries').delete().eq('id', id);
+      } catch (err) {
+        console.warn('Error deleting itinerary from database:', err);
+      }
+    }
+
     const updated = savedTrips.filter((t) => t.id !== id);
     setSavedTrips(updated);
     try {
@@ -388,7 +494,7 @@ export default function HomePage() {
         favoritesCount={favorites.length}
         savedTripsCount={savedTrips.length}
         onOpenAiPlanner={() => openAiPlanner()}
-        onOpenPromo={() => setIsPromoModalOpen(true)}
+        onOpenPromo={() => setIsProModalOpen(true)}
       />
 
       {/* Main Center */}
@@ -477,7 +583,7 @@ export default function HomePage() {
                     <div className="flex items-center gap-2">
                       <BookmarkCheck className="w-4 h-4 text-[#d4f938]" />
                       <h3 className="text-sm font-bold text-white">Your Saved Itineraries</h3>
-                      <span className="text-[10px] font-mono font-bold bg-[#d4f938] text-black px-2 py-0.2 rounded-full">
+                      <span className="text-[10px] font-mono font-bold bg-[#d4f938] text-black px-2 py-0.5 rounded-full">
                         {savedTrips.length} Active
                       </span>
                     </div>
@@ -1019,6 +1125,7 @@ export default function HomePage() {
           setIsProfileModalOpen(false);
           handleTabChange('trips');
         }}
+        onOpenProModal={() => setIsProModalOpen(true)}
       />
 
       {/* 7. Saved Trip View Modal (FIX PROBLEM 3: FULL SAVED ITINERARY SCHEDULE VIEW) */}
@@ -1029,7 +1136,19 @@ export default function HomePage() {
         onDeleteTrip={handleDeleteTrip}
       />
 
-      {/* 8. Promo Modal (50% Discount Popup) */}
+      {/* 8. Auth Modal (Google OAuth & Email/Password Sign In) */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
+
+      {/* 9. Voyage Pro Plan Modal (Razorpay Payment Gateway Integration) */}
+      <ProPlanModal
+        isOpen={isProModalOpen}
+        onClose={() => setIsProModalOpen(false)}
+      />
+
+      {/* 10. Promo Modal (50% Discount Popup) */}
       {isPromoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="relative w-full max-w-md bg-[#111827] border border-lime-400/30 rounded-3xl p-6 shadow-2xl space-y-4 text-center">

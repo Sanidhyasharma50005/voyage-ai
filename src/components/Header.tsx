@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, Bell, Sparkles, X, MapPin, CornerDownLeft, Compass } from 'lucide-react';
+import { Search, Bell, Sparkles, X, MapPin, CornerDownLeft, Compass, User as UserIcon } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 import { ALL_DESTINATIONS } from '@/data/destinations';
 import { searchDestinations, SearchResult } from '@/lib/searchEngine';
 import { Destination } from '@/types/travel';
@@ -27,6 +28,7 @@ export function Header({
   onSelectDestination,
   userLocation,
 }: HeaderProps) {
+  const { user, profile, isPro, setIsAuthModalOpen } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [activeIndex, setActiveIndex] = useState<number>(-1);
@@ -171,7 +173,7 @@ export function Header({
               id="search-autocomplete-listbox"
               role="listbox"
               aria-label="Search suggestions"
-              className="absolute left-0 right-0 top-full mt-2 bg-[#0f172a] border border-slate-700/90 rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+              className="absolute left-0 right-0 top-full mt-2 bg-[#0f172a] border border-slate-700/90 rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden z-50 animate-slideInFromTop"
             >
               {/* Optional "Did You Mean / Auto-Correct" Header */}
               {showTypoBadge && (
@@ -330,7 +332,7 @@ export function Header({
         <button
           onClick={() =>
             alert(
-              'Notifications:\n1. 🏝️ Andaman high-speed ferries operating normal schedules.\n2. 🚆 IRCTC 120-day quota open for Kashmir & South India journeys.'
+              'Notifications:\n1. 🏝️ Andaman high-speed ferries operating normal schedules.\n2. 🚆 IRCTC 60-day ARP quota open for Kashmir & South India journeys.'
             )
           }
           className="relative w-10 h-10 rounded-xl bg-[#111827] border border-slate-800 flex items-center justify-center text-slate-300 hover:text-white hover:border-slate-700 transition-colors"
@@ -339,28 +341,49 @@ export function Header({
           <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-rose-500 shadow-sm shadow-rose-500"></span>
         </button>
 
-        {/* User Avatar Badge — Clickable to View Profile */}
-        <button
-          onClick={onOpenProfile}
-          type="button"
-          title="Click to view traveler profile"
-          className="flex items-center gap-3 pl-2 border-l border-slate-800 hover:opacity-95 transition-all group text-left cursor-pointer focus:outline-none"
-        >
-          <div className="relative w-10 h-10 rounded-full ring-2 ring-[#d4f938]/50 group-hover:ring-[#d4f938] overflow-hidden bg-gradient-to-tr from-amber-400 to-rose-500 p-0.5 shadow-md transition-transform group-hover:scale-105">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&q=80"
-              alt="User Avatar"
-              className="w-full h-full object-cover rounded-full"
-            />
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#d4f938] border-2 border-[#0a0e1a]"></span>
-          </div>
-          <div className="hidden sm:flex flex-col text-left">
-            <span className="text-sm font-bold text-white leading-tight group-hover:text-[#d4f938] transition-colors">
-              {travelerName}
-            </span>
-            <span className="text-[11px] text-slate-400 font-medium">Traveler Pro</span>
-          </div>
-        </button>
+        {/* User Account / Profile Badge or Sign In CTA */}
+        {user ? (
+          <button
+            onClick={onOpenProfile}
+            type="button"
+            title="Click to view traveler profile"
+            className="flex items-center gap-3 pl-2 border-l border-slate-800 hover:opacity-95 transition-all group text-left cursor-pointer focus:outline-none"
+          >
+            <div className="relative w-10 h-10 rounded-full ring-2 ring-[#d4f938]/50 group-hover:ring-[#d4f938] overflow-hidden bg-gradient-to-tr from-amber-400 to-rose-500 p-0.5 shadow-md transition-transform group-hover:scale-105 flex items-center justify-center">
+              {profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture ? (
+                <img
+                  src={profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture}
+                  alt="User Avatar"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <div className="w-full h-full bg-[#162032] flex items-center justify-center font-bold text-white text-xs rounded-full">
+                  {(profile?.full_name || user.email || 'T')[0].toUpperCase()}
+                </div>
+              )}
+              {isPro && (
+                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#d4f938] border-2 border-[#0a0e1a]"></span>
+              )}
+            </div>
+            <div className="hidden sm:flex flex-col text-left">
+              <span className="text-sm font-bold text-white leading-tight group-hover:text-[#d4f938] transition-colors truncate max-w-[120px]">
+                {profile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || travelerName}
+              </span>
+              <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${isPro ? 'text-[#d4f938]' : 'text-slate-400'}`}>
+                {isPro ? 'Voyage Pro' : 'Free Explorer'}
+              </span>
+            </div>
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            type="button"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 hover:border-[#d4f938] text-xs font-bold transition-all shadow-sm active:scale-95 cursor-pointer"
+          >
+            <UserIcon className="w-3.5 h-3.5 text-[#d4f938]" />
+            <span>Sign In</span>
+          </button>
+        )}
       </div>
     </header>
   );

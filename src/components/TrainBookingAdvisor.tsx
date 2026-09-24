@@ -106,8 +106,31 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
   const [travelDate, setTravelDate] = useState<string>(getDefaultDate);
   const [copiedClass, setCopiedClass] = useState<string | null>(null);
 
-  // Active date tab index in the 7-day sheet (defaults to day index 3, e.g. Wed 16 Sep where confirmed berths unlock!)
-  const [selectedDateTabIdx, setSelectedDateTabIdx] = useState<number>(3);
+  // Active date tab index in the 7-day sheet (defaults to selected date at index 0)
+  const [selectedDateTabIdx, setSelectedDateTabIdx] = useState<number>(0);
+
+  // Partner API Modal & Configuration
+  const [isApiModalOpen, setIsApiModalOpen] = useState(false);
+  const [partnerApiKey, setPartnerApiKey] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('IRCTC_PARTNER_API_KEY') || '';
+    }
+    return '';
+  });
+  const [apiStatusMsg, setApiStatusMsg] = useState<string | null>(null);
+
+  const handleSaveApiKey = (key: string) => {
+    setPartnerApiKey(key);
+    if (typeof window !== 'undefined') {
+      if (key.trim()) {
+        localStorage.setItem('IRCTC_PARTNER_API_KEY', key.trim());
+        setApiStatusMsg('API credentials saved securely in local browser storage.');
+      } else {
+        localStorage.removeItem('IRCTC_PARTNER_API_KEY');
+        setApiStatusMsg('API credentials cleared. Active in Zero-Mock inform-and-link mode.');
+      }
+    }
+  };
 
   // Sync initialDestination if it changes externally (e.g. user clicks Agra modal button)
   useEffect(() => {
@@ -213,15 +236,12 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
     setIsCalculating(true);
     setTimeout(() => {
       setIsCalculating(false);
-      // Auto-jump to the earliest confirmed date tab if available
-      if (earliestAdvice.sleeper || earliestAdvice.threeAC) {
-        const targetDate = (earliestAdvice.sleeper || earliestAdvice.threeAC)?.availableDateStr;
-        const idx = trainAvailability.dateTabs.findIndex((t) => t.dateStr === targetDate);
-        if (idx !== -1) {
-          setSelectedDateTabIdx(idx);
-        }
+      // Auto-jump to the first date tab with trains if available
+      const firstTabWithTrains = trainAvailability.dateTabs.findIndex((t) => t.trainsCount > 0);
+      if (firstTabWithTrains !== -1) {
+        setSelectedDateTabIdx(firstTabWithTrains);
       }
-    }, 350);
+    }, 300);
   };
 
   // General 60-day ARP calculation
@@ -543,37 +563,48 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
         </div>
       </div>
 
-      {/* 🎯 CORE FEATURE: EARLIEST CONFIRMED TICKET ADVICE BANNER */}
+      {/* 🎯 CORE FEATURE: VERIFIED SCHEDULED SERVICES SUMMARY */}
       <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-[#111827] to-cyan-950/40 border border-emerald-500/30 shadow-2xl space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-              <Zap className="w-4 h-4 fill-emerald-400" />
+              <Train className="w-4 h-4 text-emerald-400" />
             </div>
             <div>
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400">
-                Algorithm Recommendation: Earliest Confirmed Berths
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Authoritative Schedule &amp; Tariff Advisory</span>
               </span>
               <h3 className="text-base font-extrabold text-white">
-                When Can You Get Confirmed Tickets from {originStation.c} to {effectiveDestStation.c}?
+                Scheduled Express Services ({originStation.c} ➔ {effectiveDestStation.c})
               </h3>
             </div>
           </div>
-          <span className="text-xs text-slate-400 font-mono">
-            {originStation.n} ➔ {effectiveDestStation.n} (~{trainAvailability.distanceKm} km)
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsApiModalOpen(true)}
+              className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <Zap className="w-3 h-3 text-amber-400" />
+              <span>{partnerApiKey ? 'API: Connected' : 'Live API: Zero-Mock Mode'}</span>
+            </button>
+            <span className="text-xs text-slate-400 font-mono">
+              ~{trainAvailability.distanceKm} track km
+            </span>
+          </div>
         </div>
 
-        {/* 3 Summary Cards for Earliest Confirmed Classes */}
+        {/* 3 Summary Cards for Verified Service Classes */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
-          {/* 1. Sleeper Recommendation */}
+          {/* 1. Sleeper Service */}
           <div className="p-4 rounded-2xl bg-[#162032] border border-amber-500/30 space-y-2 hover:border-amber-400 transition-colors">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
                 <span>🛏️ Sleeper (SL)</span>
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-extrabold">
-                {earliestAdvice.sleeper?.dayLabel || 'Wed, 16 Sep'}
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">
+                Standard Tariff
               </span>
             </div>
             {earliestAdvice.sleeper ? (
@@ -581,29 +612,37 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
                 <div className="text-sm font-extrabold text-white">
                   {earliestAdvice.sleeper.trainName} ({earliestAdvice.sleeper.trainNumber})
                 </div>
-                <div className="text-xs text-emerald-400 font-bold mt-1 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Confirmed: {earliestAdvice.sleeper.seatsText} · ₹{earliestAdvice.sleeper.fare}</span>
+                <div className="text-xs text-amber-300 font-bold mt-1 flex items-center gap-1.5">
+                  <span>Est. Base Fare: ₹{earliestAdvice.sleeper.fare}</span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-1">
-                  Departs at {earliestAdvice.sleeper.departureTime}
+                <div className="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
+                  <span>Departs at {earliestAdvice.sleeper.departureTime}</span>
+                  <a
+                    href="https://www.irctc.co.in/nget/booking/train-list"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-amber-400 hover:underline flex items-center gap-0.5 text-[10px]"
+                  >
+                    <span>Check Berths</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
                 </div>
               </div>
             ) : (
               <div className="text-xs text-slate-400">
-                Heavy rush on near dates. Confirmed seats available 45+ days ahead.
+                No direct sleeper train in verified schedule. Check connecting routes.
               </div>
             )}
           </div>
 
-          {/* 2. 3-Tier AC Recommendation */}
+          {/* 2. 3-Tier AC Service */}
           <div className="p-4 rounded-2xl bg-[#162032] border border-[#d4f938]/40 space-y-2 hover:border-[#d4f938] transition-colors ring-1 ring-[#d4f938]/20">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-[#d4f938] uppercase tracking-wider flex items-center gap-1.5">
-                <span>❄️ 3-Tier AC (3AC)</span>
+                <span>❄️ 3-Tier AC (3AC / 3E)</span>
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#d4f938] text-black font-extrabold">
-                {earliestAdvice.threeAC?.dayLabel || 'Wed, 16 Sep'}
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#d4f938]/20 text-[#d4f938] font-bold">
+                Standard Tariff
               </span>
             </div>
             {earliestAdvice.threeAC ? (
@@ -612,28 +651,36 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
                   {earliestAdvice.threeAC.trainName} ({earliestAdvice.threeAC.trainNumber})
                 </div>
                 <div className="text-xs text-[#d4f938] font-bold mt-1 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Confirmed: {earliestAdvice.threeAC.seatsText} · ₹{earliestAdvice.threeAC.fare}</span>
+                  <span>Est. Base Fare: ₹{earliestAdvice.threeAC.fare}</span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-1">
-                  Departs at {earliestAdvice.threeAC.departureTime}
+                <div className="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
+                  <span>Departs at {earliestAdvice.threeAC.departureTime}</span>
+                  <a
+                    href="https://www.irctc.co.in/nget/booking/train-list"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#d4f938] hover:underline flex items-center gap-0.5 text-[10px]"
+                  >
+                    <span>Check Berths</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
                 </div>
               </div>
             ) : (
               <div className="text-xs text-slate-400">
-                Confirmed berths open 30–45 days ahead.
+                No direct 3AC train in verified schedule.
               </div>
             )}
           </div>
 
-          {/* 3. 2-Tier AC Recommendation */}
+          {/* 3. 2-Tier AC Service */}
           <div className="p-4 rounded-2xl bg-[#162032] border border-cyan-500/30 space-y-2 hover:border-cyan-400 transition-colors">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
                 <span>🌟 2-Tier AC (2AC)</span>
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-extrabold">
-                {earliestAdvice.twoAC?.dayLabel || 'Wed, 16 Sep'}
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold">
+                Standard Tariff
               </span>
             </div>
             {earliestAdvice.twoAC ? (
@@ -642,33 +689,41 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
                   {earliestAdvice.twoAC.trainName} ({earliestAdvice.twoAC.trainNumber})
                 </div>
                 <div className="text-xs text-cyan-300 font-bold mt-1 flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Confirmed: {earliestAdvice.twoAC.seatsText} · ₹{earliestAdvice.twoAC.fare}</span>
+                  <span>Est. Base Fare: ₹{earliestAdvice.twoAC.fare}</span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-1">
-                  Departs at {earliestAdvice.twoAC.departureTime}
+                <div className="text-[11px] text-slate-400 mt-1 flex items-center justify-between">
+                  <span>Departs at {earliestAdvice.twoAC.departureTime}</span>
+                  <a
+                    href="https://www.irctc.co.in/nget/booking/train-list"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 hover:underline flex items-center gap-0.5 text-[10px]"
+                  >
+                    <span>Check Berths</span>
+                    <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
                 </div>
               </div>
             ) : (
               <div className="text-xs text-slate-400">
-                Confirmed berths open 20–35 days ahead.
+                No direct 2AC train in verified schedule.
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* 📅 7-DAY DATE AVAILABILITY BAR (MATCHING Ixigo / ConfirmTkt Screenshot) */}
+      {/* 📅 7-DAY SCHEDULE AVAILABILITY STRIP */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-cyan-400" />
             <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              Train Availability Across Dates ({originStation.c} ➔ {effectiveDestStation.c})
+              Train Operating Schedule Across Dates ({originStation.c} ➔ {effectiveDestStation.c})
             </h3>
           </div>
           <span className="text-xs text-slate-400">
-            Click any date to inspect seat sheets
+            Click any date to inspect scheduled trains
           </span>
         </div>
 
@@ -676,15 +731,15 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
         <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">
           {trainAvailability.dateTabs.map((tab, idx) => {
             const isSelected = selectedDateTabIdx === idx;
-            const isAvail = tab.statusSummary === 'Available';
-            const isFilling = tab.statusSummary === 'Filling Fast';
+            const isDirect = tab.statusSummary === 'Verified Schedule';
+            const isAlt = tab.statusSummary === 'Alternate Stations';
 
             return (
               <button
                 key={tab.dateStr}
                 type="button"
                 onClick={() => setSelectedDateTabIdx(idx)}
-                className={`flex-shrink-0 px-4 py-2.5 rounded-2xl border transition-all cursor-pointer text-left min-w-[120px] ${
+                className={`flex-shrink-0 px-4 py-2.5 rounded-2xl border transition-all cursor-pointer text-left min-w-[130px] ${
                   isSelected
                     ? 'bg-[#162032] border-[#d4f938] shadow-lg shadow-lime-500/10 ring-1 ring-[#d4f938]'
                     : 'bg-[#111827] border-slate-800 hover:border-slate-700'
@@ -701,15 +756,17 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
                 <div className="flex items-center gap-1.5 mt-1">
                   <span
                     className={`w-2 h-2 rounded-full ${
-                      isAvail ? 'bg-emerald-400' : isFilling ? 'bg-amber-400' : 'bg-rose-500'
+                      isDirect ? 'bg-emerald-400' : isAlt ? 'bg-amber-400' : 'bg-slate-600'
                     }`}
                   />
                   <span
                     className={`text-[11px] font-semibold ${
-                      isAvail ? 'text-emerald-300' : isFilling ? 'text-amber-300' : 'text-slate-400'
+                      isDirect ? 'text-emerald-300' : isAlt ? 'text-amber-300' : 'text-slate-400'
                     }`}
                   >
-                    {tab.statusSummary}
+                    {tab.trainsCount > 0
+                      ? `${tab.trainsCount} ${tab.trainsCount === 1 ? 'Train' : 'Trains'}`
+                      : 'No Trains'}
                   </span>
                 </div>
               </button>
@@ -718,7 +775,7 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
         </div>
       </div>
 
-      {/* 🚆 LIVE TRAIN BOOKING SHEETS FOR SELECTED DATE (MATCHING USER SCREENSHOT) */}
+      {/* 🚆 VERIFIED TRAIN SCHEDULES FOR SELECTED DATE */}
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
@@ -728,135 +785,262 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
               <span className="text-slate-400 font-normal text-xs">({originStation.n} ➔ {effectiveDestStation.n})</span>
             </h3>
             <span className="text-xs text-slate-400">
-              {activeDateTrains.length} Express / Superfast Trains Running on this corridor
+              {activeDateTrains.length} Express / Superfast Services Verified for this corridor
             </span>
           </div>
-          <a
-            href="https://www.irctc.co.in/nget/train-search"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center gap-1.5 transition-colors"
-          >
-            <span>Book on IRCTC</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href="https://www.irctc.co.in/nget/booking/train-list"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 rounded-xl bg-[#d4f938] hover:bg-lime-400 text-xs font-extrabold text-black flex items-center gap-1.5 transition-colors shadow-md shadow-lime-500/10"
+            >
+              <span>Book on IRCTC</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
         </div>
 
-        {/* List of Train Cards */}
-        <div className="space-y-3">
+        {/* List of Verified Train Cards */}
+        <div className="space-y-4">
           {activeDateTrains.map((train) => (
             <div
               key={train.trainNumber}
-              className="p-5 rounded-3xl bg-[#111827] border border-slate-800 hover:border-slate-700 space-y-4 shadow-lg transition-all"
+              className={`p-5 rounded-3xl bg-[#111827] border space-y-4 shadow-lg transition-all ${
+                train.isAlternateStation
+                  ? 'border-amber-500/40 bg-gradient-to-br from-[#111827] via-[#111827] to-amber-950/20'
+                  : 'border-slate-800 hover:border-slate-700'
+              }`}
             >
               {/* Train Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xs font-mono font-bold text-slate-400">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <span className="text-xs font-mono font-bold text-slate-300 bg-slate-800 px-2 py-0.5 rounded">
                     {train.trainNumber}
                   </span>
-                  <span className="text-sm font-extrabold text-white hover:text-[#d4f938] flex items-center gap-1 cursor-pointer transition-colors">
-                    <span>{train.trainName}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="text-sm font-extrabold text-white flex items-center gap-1">
+                    <span>{train.trainName.toUpperCase()}</span>
                   </span>
+                  <span className="text-[10px] font-semibold text-[#d4f938] bg-[#d4f938]/10 border border-[#d4f938]/30 px-2 py-0.5 rounded-full">
+                    {train.trainType}
+                  </span>
+                  {train.runsOnDays && (
+                    <span className="text-[11px] font-mono text-slate-300 bg-slate-800/80 px-2 py-0.5 rounded">
+                      Runs On: {train.runsOnDays}
+                    </span>
+                  )}
                   {train.foodAvailable && (
-                    <span title="Catering / Food Available" className="p-1 rounded bg-slate-800 text-slate-300">
+                    <span title="Catering / Pantry Car Available" className="p-1 rounded bg-slate-800 text-slate-300">
                       <Utensils className="w-3 h-3" />
                     </span>
                   )}
-                  <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[11px] font-mono text-amber-300 font-bold flex items-center gap-0.5">
-                    <Star className="w-2.5 h-2.5 fill-amber-300" />
-                    <span>{train.rating}</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <a
+                    href={train.partnerDeepLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-sky-400 hover:text-sky-300 underline font-semibold flex items-center gap-1"
+                  >
+                    <span>ConfirmTkt Live</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <a
+                    href={train.irctcDeepLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-[#d4f938] hover:underline font-semibold flex items-center gap-1"
+                  >
+                    <span>IRCTC NGET</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Alternate Station Notice if applicable */}
+              {train.isAlternateStation && (
+                <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Alternate Gateway Station: </span>
+                    <span>{train.alternateNotice}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Timing & Stations Bar (matching IRCTC layout) */}
+              <div className="p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-between flex-wrap gap-4 text-xs">
+                <div className="space-y-0.5">
+                  <div className="text-base font-extrabold text-white flex items-center gap-1.5">
+                    <span>{train.departureTime}</span>
+                    <span className="font-mono text-xs text-sky-300 font-semibold">| {train.departureStationName}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 font-mono">
+                    {activeTab?.dayLabel} {activeTab?.monthLabel}
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center gap-1 text-slate-400">
+                  <span className="font-mono text-[11px] font-bold text-slate-300 px-2 py-0.5 rounded bg-slate-800 border border-slate-700">
+                    {train.duration}
                   </span>
+                  <div className="flex items-center gap-1 text-slate-600 text-[10px]">
+                    <span>────────►</span>
+                  </div>
                 </div>
 
-                <a
-                  href="https://www.irctc.co.in/nget/train-search"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-slate-400 hover:text-white underline self-start sm:self-auto"
-                >
-                  Schedule
-                </a>
-              </div>
-
-              {/* Timing Bar */}
-              <div className="flex items-center gap-3 text-xs">
-                <div className="flex items-center gap-1.5">
-                  <strong className="text-sm font-extrabold text-white">{train.departureTime}</strong>
-                  <span className="font-mono text-slate-400">{originStation.c}</span>
-                </div>
-                <div className="flex items-center gap-1 text-slate-500">
-                  <span>──</span>
-                  <span className="font-mono text-[11px] text-slate-400 px-1 py-0.5 rounded bg-slate-800">{train.duration}</span>
-                  <span>──&gt;</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <strong className="text-sm font-extrabold text-white">{train.arrivalTime}</strong>
-                  <span className="font-mono text-slate-400">{effectiveDestStation.c}</span>
+                <div className="space-y-0.5 text-right">
+                  <div className="text-base font-extrabold text-white flex items-center gap-1.5 justify-end">
+                    <span>{train.arrivalTime}</span>
+                    <span className="font-mono text-xs text-indigo-300 font-semibold">| {train.arrivalStationName}</span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 font-mono">
+                    {train.arrivalDayLabel || '+1 day'}
+                  </div>
                 </div>
               </div>
 
-              {/* Class Availability Cards Grid (SL, 3A, 2A, 3E...) */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                {train.classes.map((cls) => {
-                  const isAvail = cls.status === 'AVAILABLE';
-                  const isWaitlist = cls.status === 'WAITLIST';
+              {/* Travel Classes Grid with Official Distance-Based Estimates and Real IRCTC Links */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Available Classes &amp; Distance-Based Tariff Estimates:</span>
+                  <span className="italic">Live seat counts update dynamically on IRCTC</span>
+                </div>
 
-                  return (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 pt-1">
+                  {train.classes.map((cls) => (
                     <div
                       key={cls.classCode}
-                      className={`p-3 rounded-2xl border transition-all flex flex-col justify-between ${
-                        isAvail
-                          ? 'bg-emerald-950/20 border-emerald-500/40 hover:border-emerald-400 shadow-sm'
-                          : 'bg-[#162032] border-slate-800 hover:border-slate-700'
-                      }`}
+                      className="p-3 rounded-2xl border border-slate-800 bg-[#162032] hover:border-slate-700 transition-all flex flex-col justify-between"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white">
-                          {cls.classCode}
-                        </span>
-                        <span className="text-xs font-mono font-extrabold text-slate-300">
-                          ₹{cls.fare}
+                        <span className="text-xs font-extrabold text-white">
+                          {cls.className} ({cls.classCode})
                         </span>
                       </div>
 
                       <div className="mt-2">
-                        <div
-                          className={`text-sm font-extrabold font-mono flex items-center gap-1 ${
-                            isAvail ? 'text-emerald-400' : 'text-amber-400'
-                          }`}
-                        >
-                          {isWaitlist && (
-                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                          )}
-                          <span>{cls.statusText}</span>
+                        <div className="text-base font-extrabold font-mono text-[#d4f938]">
+                          ₹{cls.fare}
                         </div>
-                        <span
-                          className={`text-[11px] block mt-0.5 font-medium ${
-                            isAvail ? 'text-emerald-300' : 'text-slate-400'
-                          }`}
-                        >
-                          {isAvail ? 'Available' : 'Waitlist'}
+                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                          Est. Fare (not live)
                         </span>
                       </div>
 
-                      <div className="mt-2 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500">
-                        <span>{cls.updatedAgo}</span>
-                        {cls.chancePercent && (
-                          <span className="text-emerald-400 font-mono font-bold">
-                            {cls.chancePercent}% Chance
-                          </span>
-                        )}
+                      <div className="mt-2 pt-2 border-t border-slate-800 flex items-center justify-between">
+                        <a
+                          href={train.partnerDeepLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1"
+                        >
+                          <span>Check Live</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <span className="text-[9px] font-mono text-slate-500">
+                          {cls.slabVersion}
+                        </span>
                       </div>
                     </div>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             </div>
           ))}
+
+          {/* Empty State */}
+          {activeDateTrains.length === 0 && (
+            <div className="p-8 rounded-3xl bg-[#111827] border border-slate-800 text-center space-y-4">
+              <div className="w-12 h-12 rounded-full bg-slate-800 mx-auto flex items-center justify-center text-slate-400">
+                <Train className="w-6 h-6" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-base font-bold text-white">No Direct Trains Scheduled on This Date</h4>
+                <p className="text-xs text-slate-400 max-w-lg mx-auto leading-relaxed">
+                  Under our strict Zero-Mock policy, we never generate synthetic trains. No direct scheduled trains in our verified database run between {originStation.n} ({originStation.c}) and {effectiveDestStation.n} ({effectiveDestStation.c}) on {activeTab?.dayLabel}.
+                </p>
+              </div>
+              <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
+                <a
+                  href="https://www.irctc.co.in/nget/booking/train-list"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#d4f938] text-black font-extrabold text-xs hover:bg-lime-400 transition-colors shadow-md shadow-lime-500/10"
+                >
+                  <span>Search Connecting Trains on IRCTC NGET</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* 🔐 IRCTC PARTNER API CREDENTIALS MODAL */}
+      {isApiModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#111827] border border-slate-700 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-fadeIn">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-400" />
+                <h3 className="text-lg font-bold text-white">Connect IRCTC Partner API</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsApiModalOpen(false)}
+                className="text-slate-400 hover:text-white text-lg font-bold px-2 py-1 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              By default, Voyage displays verified Indian Railways timetables, running days, and distance-based fare estimates under our strict Zero-Mock policy. To stream real-time seat counts and live PNR statuses directly into the app, you may provide an authorized IRCTC B2B Partner or RailAPI merchant token.
+            </p>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-300">
+                Partner / Merchant API Key:
+              </label>
+              <input
+                type="password"
+                value={partnerApiKey}
+                onChange={(e) => setPartnerApiKey(e.target.value)}
+                placeholder="Enter authorized partner key..."
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-400"
+              />
+            </div>
+
+            {apiStatusMsg && (
+              <p className="text-xs text-emerald-400 bg-emerald-950/30 p-2.5 rounded-xl border border-emerald-800/40">
+                {apiStatusMsg}
+              </p>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => handleSaveApiKey('')}
+                className="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 hover:text-white text-xs font-bold cursor-pointer"
+              >
+                Clear / Disconnect
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleSaveApiKey(partnerApiKey);
+                  setTimeout(() => setIsApiModalOpen(false), 800);
+                }}
+                className="px-4 py-2 rounded-xl bg-[#d4f938] text-black font-extrabold text-xs hover:bg-lime-400 cursor-pointer shadow-md shadow-lime-500/10"
+              >
+                Save &amp; Connect
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* IRCTC 60-Day Advance Reservation Rule & Tatkal Times Card */}
       {bookingCalculations && (
