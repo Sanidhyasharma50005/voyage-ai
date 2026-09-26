@@ -291,44 +291,44 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
   return (
     <div className="space-y-8 max-w-4xl mx-auto animate-fadeIn">
       {/* Multi-Modal Transport Switcher */}
-      <div className="flex p-1.5 rounded-2xl bg-[#111827] border border-slate-800 gap-2 max-w-2xl mx-auto shadow-xl">
+      <div className="flex p-1 sm:p-1.5 rounded-2xl bg-[#111827] border border-slate-800 gap-1 sm:gap-2 max-w-2xl mx-auto shadow-xl">
         <button
           type="button"
           onClick={() => setTransportMode('train')}
-          className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+          className={`flex-1 py-2 sm:py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer ${
             transportMode === 'train'
               ? 'bg-[#d4f938] text-black shadow-md shadow-lime-500/20 font-extrabold'
               : 'text-slate-400 hover:text-white hover:bg-slate-800'
           }`}
         >
-          <Train className="w-4 h-4" />
-          <span>Trains (IRCTC 60D Engine)</span>
+          <Train className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span>Trains<span className="hidden sm:inline"> (IRCTC 60D Engine)</span></span>
         </button>
 
         <button
           type="button"
           onClick={() => setTransportMode('flight')}
-          className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+          className={`flex-1 py-2 sm:py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer ${
             transportMode === 'flight'
               ? 'bg-sky-400 text-black shadow-md shadow-sky-400/20 font-extrabold'
               : 'text-slate-400 hover:text-white hover:bg-slate-800'
           }`}
         >
-          <Plane className="w-4 h-4" />
-          <span>Flights (Airports &amp; Live Search)</span>
+          <Plane className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span>Flights<span className="hidden sm:inline"> (Airports &amp; Live Search)</span></span>
         </button>
 
         <button
           type="button"
           onClick={() => setTransportMode('bus')}
-          className={`flex-1 py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
+          className={`flex-1 py-2 sm:py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer ${
             transportMode === 'bus'
               ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20 font-extrabold'
               : 'text-slate-400 hover:text-white hover:bg-slate-800'
           }`}
         >
-          <Bus className="w-4 h-4" />
-          <span>Buses (ISBTs &amp; Live redBus)</span>
+          <Bus className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span>Buses<span className="hidden sm:inline"> (ISBTs &amp; Live redBus)</span></span>
         </button>
       </div>
 
@@ -367,7 +367,7 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
       </div>
 
       {/* Main Input Box */}
-      <div className="p-6 rounded-3xl bg-[#111827] border border-slate-800 shadow-xl space-y-5">
+      <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-[#111827] border border-slate-800 shadow-xl space-y-4 sm:space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* 1. Origin Station Searchable Combobox */}
           <div className="space-y-2">
@@ -564,7 +564,7 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
       </div>
 
       {/* 🎯 CORE FEATURE: VERIFIED SCHEDULED SERVICES SUMMARY */}
-      <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-950/40 via-[#111827] to-cyan-950/40 border border-emerald-500/30 shadow-2xl space-y-4">
+      <div className="p-4 sm:p-6 rounded-2xl sm:rounded-3xl bg-gradient-to-r from-emerald-950/40 via-[#111827] to-cyan-950/40 border border-emerald-500/30 shadow-2xl space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">

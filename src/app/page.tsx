@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Sidebar, NavTab } from '@/components/Sidebar';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { Header } from '@/components/Header';
 import { EasyVisaCarousel } from '@/components/EasyVisaCarousel';
 import { DestinationCard } from '@/components/DestinationCard';
@@ -486,8 +487,8 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#070a13] text-slate-100 font-sans selection:bg-[#d4f938] selection:text-black">
-      {/* 1. Left Sidebar Navigation */}
+    <div className="flex flex-col lg:flex-row min-h-screen bg-[#070a13] text-slate-100 font-sans selection:bg-[#d4f938] selection:text-black">
+      {/* 1. Left Sidebar Navigation (Desktop only, hidden on mobile) */}
       <Sidebar
         currentTab={currentTab}
         onSelectTab={handleTabChange}
@@ -497,9 +498,20 @@ export default function HomePage() {
         onOpenPromo={() => setIsProModalOpen(true)}
       />
 
+      {/* 2. Mobile Bottom Navigation (Mobile & Tablet only, hidden on desktop) */}
+      <MobileBottomNav
+        currentTab={currentTab}
+        onSelectTab={handleTabChange}
+        favoritesCount={favorites.length}
+        savedTripsCount={savedTrips.length}
+        onOpenAiPlanner={() => openAiPlanner()}
+        onOpenPromo={() => setIsProModalOpen(true)}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
+      />
+
       {/* Main Center */}
       <div className="flex-1 flex flex-col min-w-0 bg-[#0a0e1a]">
-        {/* 2. Top Header with Clickable Profile Picture */}
+        {/* Top Header with Clickable Profile Picture */}
         <Header
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
@@ -513,25 +525,27 @@ export default function HomePage() {
 
         {/* Floating Toast when itinerary saved */}
         {saveToast && (
-          <div className="fixed top-24 right-8 z-50 p-4 rounded-2xl bg-[#111827] border border-[#d4f938]/60 text-xs text-white shadow-2xl flex items-center gap-3 animate-fadeIn">
-            <div className="w-8 h-8 rounded-full bg-[#d4f938] text-black flex items-center justify-center font-bold">
-              ✓
-            </div>
-            <div>
-              <p className="font-bold text-white leading-tight">{saveToast}</p>
-              <button
-                onClick={() => {
-                  setSaveToast(null);
-                  handleTabChange('trips');
-                }}
-                className="text-[11px] text-[#d4f938] hover:underline font-semibold mt-0.5"
-              >
-                View in My Itineraries →
-              </button>
+          <div className="fixed top-20 sm:top-24 right-4 sm:right-8 left-4 sm:left-auto z-50 p-4 rounded-2xl bg-[#111827] border border-[#d4f938]/60 text-xs text-white shadow-2xl flex items-center justify-between gap-3 animate-fadeIn">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-[#d4f938] text-black flex items-center justify-center font-bold shrink-0">
+                ✓
+              </div>
+              <div>
+                <p className="font-bold text-white leading-tight">{saveToast}</p>
+                <button
+                  onClick={() => {
+                    setSaveToast(null);
+                    handleTabChange('trips');
+                  }}
+                  className="text-[11px] text-[#d4f938] hover:underline font-semibold mt-0.5 cursor-pointer"
+                >
+                  View in My Itineraries →
+                </button>
+              </div>
             </div>
             <button
               onClick={() => setSaveToast(null)}
-              className="text-slate-400 hover:text-white text-xs ml-2"
+              className="text-slate-400 hover:text-white text-xs ml-2 p-1 cursor-pointer"
             >
               ✕
             </button>
@@ -539,7 +553,7 @@ export default function HomePage() {
         )}
 
         {/* Scrollable Main Body */}
-        <main className="flex-1 p-6 sm:p-8 space-y-8 overflow-y-auto max-h-[calc(100vh-5rem)]">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 overflow-y-auto max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-5rem)] pb-28 lg:pb-8">
           {/* TAB 1: DASHBOARD VIEW */}
           {currentTab === 'dashboard' && (
             <>
@@ -547,20 +561,20 @@ export default function HomePage() {
               <section className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                    <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
                       Hello {travelerName}!
                     </h1>
                     <span className="text-2xl">👋</span>
                   </div>
-                  <p className="text-sm sm:text-base text-slate-400 mt-1">
+                  <p className="text-xs sm:text-sm text-slate-400 mt-1">
                     Welcome back — explore {DESTINATIONS.filter(d => d.country === 'India').length}+ Indian destinations across all states with accurate seasonal travel guides.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3">
                   <button
                     onClick={() => handleTabChange('nearme')}
-                    className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-2 transition-all"
+                    className="flex-1 sm:flex-initial px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-slate-600 text-xs font-semibold text-slate-300 hover:text-white flex items-center justify-center gap-2 transition-all cursor-pointer"
                   >
                     <Navigation2 className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Radar Near Me</span>
@@ -568,10 +582,10 @@ export default function HomePage() {
 
                   <button
                     onClick={() => openAiPlanner()}
-                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-[#d4f938] to-lime-400 text-black font-extrabold text-xs flex items-center gap-2 shadow-lg shadow-lime-500/20 hover:scale-105 active:scale-95 transition-all"
+                    className="flex-1 sm:flex-initial px-4 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-[#d4f938] to-lime-400 text-black font-extrabold text-xs flex items-center justify-center gap-2 shadow-lg shadow-lime-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer whitespace-nowrap"
                   >
                     <Sparkles className="w-4 h-4" />
-                    <span>Create AI Trip Plan</span>
+                    <span>Create AI Plan</span>
                   </button>
                 </div>
               </section>
@@ -655,8 +669,8 @@ export default function HomePage() {
               </section>
 
               {/* Sub-Tabs */}
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-6 text-sm font-semibold">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm font-semibold overflow-x-auto no-scrollbar whitespace-nowrap py-0.5 w-full sm:w-auto">
                   {[
                     { key: 'popular' as const, label: 'Most Popular' },
                     { key: 'offers' as const, label: 'Special Offers', badge: '50%', badgeColor: 'bg-rose-500/20 text-rose-300' },
@@ -669,7 +683,7 @@ export default function HomePage() {
                         setActiveSubTab(tab.key);
                         if (tab.key === 'nearme' && !userLocation) handleRequestLocation();
                       }}
-                      className={`relative pb-3 transition-colors flex items-center gap-1.5 ${
+                      className={`relative pb-2.5 transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer ${
                         activeSubTab === tab.key ? 'text-white font-bold' : 'text-slate-400 hover:text-slate-200'
                       }`}
                     >
@@ -686,7 +700,7 @@ export default function HomePage() {
                   ))}
                 </div>
 
-                <span className="text-xs text-slate-400 font-medium hidden sm:inline">
+                <span className="text-xs text-slate-400 font-medium hidden md:inline shrink-0 ml-4">
                   {filteredDestinations.length} destinations
                 </span>
               </div>
@@ -1030,7 +1044,7 @@ export default function HomePage() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-3.5 sm:gap-4">
                   {filteredDestinations.map((dest) => {
                     const dist =
                       userLocation
@@ -1150,12 +1164,12 @@ export default function HomePage() {
 
       {/* 10. Promo Modal (50% Discount Popup) */}
       {isPromoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="relative w-full max-w-md bg-[#111827] border border-lime-400/30 rounded-3xl p-6 shadow-2xl space-y-4 text-center">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-[#d4f938]/10 text-4xl flex items-center justify-center">🎉</div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md">
+          <div className="relative w-full max-w-md bg-[#111827] border border-lime-400/30 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 text-center">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-2xl bg-[#d4f938]/10 text-3xl sm:text-4xl flex items-center justify-center">🎉</div>
             <div>
               <span className="text-[11px] font-bold text-[#d4f938] uppercase tracking-wider">Limited Time</span>
-              <h3 className="text-2xl font-extrabold text-white mt-1">50% Discount on Off-Peak Dates!</h3>
+              <h3 className="text-xl sm:text-2xl font-extrabold text-white mt-1">50% Discount on Off-Peak Dates!</h3>
               <p className="text-xs text-slate-300 mt-2 leading-relaxed">
                 Save up to 50% on boutique hostels in Goa, Kerala, and Himachal by booking mid-week (Tue-Thu).
               </p>
@@ -1163,9 +1177,9 @@ export default function HomePage() {
             <div className="bg-[#090d16] p-3 rounded-xl border border-slate-800 text-xs font-mono text-lime-300">
               Promo Code: <strong className="text-white font-bold">VOYAGE50</strong>
             </div>
-            <div className="flex gap-3 pt-2">
-              <button onClick={() => setIsPromoModalOpen(false)} className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300">Close</button>
-              <button onClick={() => { setIsPromoModalOpen(false); openAiPlanner(); }} className="flex-1 py-2.5 rounded-xl bg-[#d4f938] hover:bg-lime-400 text-black font-extrabold text-xs shadow-md shadow-lime-500/20">Plan Trip</button>
+            <div className="flex gap-2.5 sm:gap-3 pt-2">
+              <button onClick={() => setIsPromoModalOpen(false)} className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 cursor-pointer">Close</button>
+              <button onClick={() => { setIsPromoModalOpen(false); openAiPlanner(); }} className="flex-1 py-2.5 rounded-xl bg-[#d4f938] hover:bg-lime-400 text-black font-extrabold text-xs shadow-md shadow-lime-500/20 cursor-pointer">Plan Trip</button>
             </div>
           </div>
         </div>

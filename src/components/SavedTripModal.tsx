@@ -45,8 +45,8 @@ export function SavedTripModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-[#0d1322] border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
+      <div className="relative w-full max-w-3xl bg-[#0d1322] border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[92vh] sm:max-h-[90vh] flex flex-col">
         {/* Banner with Destination Photo */}
         <div className="relative h-44 sm:h-52 w-full overflow-hidden shrink-0">
           <img
@@ -62,13 +62,13 @@ export function SavedTripModal({
           {/* Close Button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-black/80 flex items-center justify-center transition-colors z-20"
+            className="absolute top-3 sm:top-4 right-3 sm:right-4 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/60 backdrop-blur-md text-white hover:bg-black/80 flex items-center justify-center transition-colors z-20 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
 
           {/* Title on Banner */}
-          <div className="absolute bottom-4 left-6 right-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+          <div className="absolute bottom-3 sm:bottom-4 left-3.5 sm:left-6 right-3.5 sm:right-6 flex flex-col sm:flex-row sm:items-end justify-between gap-2">
             <div>
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-[#d4f938] text-black font-mono">
@@ -78,12 +78,12 @@ export function SavedTripModal({
                   {trip.dates}
                 </span>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
+              <h2 className="text-xl sm:text-3xl font-extrabold text-white leading-tight">
                 {plan.title}
               </h2>
             </div>
 
-            <div className="bg-black/70 backdrop-blur-md border border-slate-700 px-3.5 py-1.5 rounded-xl self-start sm:self-auto text-right">
+            <div className="bg-black/70 backdrop-blur-md border border-slate-700 px-3 py-1.5 rounded-xl self-start sm:self-auto text-left sm:text-right">
               <span className="text-[10px] text-slate-400 uppercase tracking-wider block">
                 Total Estimated Cost
               </span>
@@ -95,7 +95,7 @@ export function SavedTripModal({
         </div>
 
         {/* Scrollable Itinerary Schedule */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 sm:space-y-6 flex-1">
           <p className="text-sm text-slate-300 leading-relaxed bg-slate-900/50 p-3.5 rounded-xl border border-slate-800">
             {plan.summary}
           </p>
@@ -198,17 +198,17 @@ export function SavedTripModal({
                     onClose();
                   }
                 }}
-                className="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                className="w-full sm:w-auto px-3.5 py-2.5 sm:py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Itinerary</span>
               </button>
             )}
 
-            <div className="flex items-center gap-3 ml-auto">
+            <div className="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto sm:ml-auto">
               <button
                 onClick={handleCopy}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center gap-1.5 transition-colors"
+                className="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 {copied ? (
                   <>
@@ -225,7 +225,7 @@ export function SavedTripModal({
 
               <button
                 onClick={onClose}
-                className="px-5 py-2 rounded-xl bg-[#d4f938] hover:bg-[#bde629] text-black font-extrabold text-xs transition-colors"
+                className="flex-1 sm:flex-initial px-5 py-2.5 sm:py-2 rounded-xl bg-[#d4f938] hover:bg-[#bde629] text-black font-extrabold text-xs transition-colors cursor-pointer text-center"
               >
                 Close Itinerary
               </button>

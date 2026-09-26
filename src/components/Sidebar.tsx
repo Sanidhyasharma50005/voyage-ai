@@ -60,7 +60,7 @@ export function Sidebar({
   ];
 
   return (
-    <aside className="w-64 min-h-screen bg-[#070a13] border-r border-slate-800/80 p-5 flex flex-col justify-between shrink-0 select-none">
+    <aside className="hidden lg:flex w-64 min-h-screen bg-[#070a13] border-r border-slate-800/80 p-5 flex-col justify-between shrink-0 select-none sticky top-0 h-screen overflow-y-auto custom-scrollbar">
       {/* Top: Logo & Main Navigation */}
       <div className="space-y-7">
         <div className="pt-1 pb-2">

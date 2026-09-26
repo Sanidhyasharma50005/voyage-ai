@@ -195,39 +195,39 @@ export function AiPlannerModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-4xl bg-[#0d1322] border border-slate-700/80 rounded-3xl shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-fadeIn">
+      <div className="relative w-full max-w-4xl bg-[#0d1322] border border-slate-700/80 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[92vh] sm:max-h-[90vh] flex flex-col">
         {/* Header with gradient badge */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-cyan-950/30 via-slate-900 to-[#0d1322]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center text-black shadow-lg shadow-cyan-500/20">
-              <Sparkles className="w-5 h-5" />
+        <div className="p-4 sm:p-6 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-cyan-950/30 via-slate-900 to-[#0d1322] gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-teal-500 flex items-center justify-center text-black shadow-lg shadow-cyan-500/20 shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-xl font-bold text-white truncate">
                   Voyage AI Trip Planner
                 </h2>
                 <span className="text-[10px] font-mono uppercase bg-[#d4f938] text-black font-bold px-2 py-0.5 rounded-full">
                   Gemini Flash
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
-                Instant day-by-day smart itinerary with cost breakdown & packing guide
+              <p className="text-[11px] sm:text-xs text-slate-400 truncate">
+                Instant day-by-day smart itinerary with cost breakdown &amp; packing guide
               </p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
+            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-colors shrink-0 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-5 sm:space-y-6 flex-1">
           {/* 1. Destination & Duration Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Destination Picker */}
@@ -483,10 +483,10 @@ export function AiPlannerModal({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 pt-2">
                 <button
                   onClick={handleCopy}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center gap-1.5 transition-colors"
+                  className="w-full sm:w-auto px-4 py-2.5 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   {copied ? (
                     <>
@@ -508,7 +508,7 @@ export function AiPlannerModal({
                     }
                     onClose();
                   }}
-                  className="px-5 py-2 rounded-xl bg-[#d4f938] hover:bg-lime-400 text-xs font-extrabold text-black flex items-center gap-1.5 transition-colors shadow-md shadow-lime-500/20 active:scale-95 cursor-pointer"
+                  className="w-full sm:w-auto px-5 py-2.5 sm:py-2 rounded-xl bg-[#d4f938] hover:bg-lime-400 text-xs font-extrabold text-black flex items-center justify-center gap-1.5 transition-colors shadow-md shadow-lime-500/20 active:scale-95 cursor-pointer"
                 >
                   <Calendar className="w-3.5 h-3.5" />
                   <span>Save to My Trips</span>
