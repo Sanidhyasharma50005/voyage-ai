@@ -552,8 +552,8 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Scrollable Main Body */}
-        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 overflow-y-auto max-h-[calc(100vh-4rem)] sm:max-h-[calc(100vh-5rem)] pb-28 lg:pb-8">
+        {/* Scrollable Main Body (Native window scroll on mobile, contained on desktop) */}
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 lg:overflow-y-auto lg:max-h-[calc(100vh-5rem)] pb-28 lg:pb-8">
           {/* TAB 1: DASHBOARD VIEW */}
           {currentTab === 'dashboard' && (
             <>

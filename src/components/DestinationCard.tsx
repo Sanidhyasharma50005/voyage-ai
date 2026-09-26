@@ -38,10 +38,10 @@ export function DestinationCard({
   return (
     <div
       onClick={() => onSelect(destination)}
-      className="flex items-center gap-4 p-3.5 bg-[#111827] hover:bg-[#162032] border border-slate-800 hover:border-slate-700/80 rounded-2xl cursor-pointer group transition-all duration-200 hover:-translate-y-0.5 shadow-sm hover:shadow-md"
+      className="flex items-center gap-3 sm:gap-4 p-3 sm:p-3.5 bg-[#111827] hover:bg-[#162032] border border-slate-800 hover:border-slate-700/80 rounded-2xl cursor-pointer group transition-all duration-200 hover:-translate-y-0.5 shadow-sm hover:shadow-md"
     >
       {/* Thumbnail */}
-      <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 bg-slate-900">
+      <div className="relative w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden shrink-0 bg-slate-900">
         <img
           src={imgSrc}
           alt={destination.name}

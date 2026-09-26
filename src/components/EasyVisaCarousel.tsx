@@ -48,7 +48,7 @@ export function EasyVisaCarousel({
             <div
               key={dest.id}
               onClick={() => onSelectDestination(dest)}
-              className="relative w-72 sm:w-80 shrink-0 h-48 rounded-2xl overflow-hidden cursor-pointer group border border-slate-800/80 hover:border-slate-700 transition-all duration-300 shadow-lg hover:shadow-cyan-950/20"
+              className="relative w-64 sm:w-80 shrink-0 h-44 sm:h-48 rounded-2xl overflow-hidden cursor-pointer group border border-slate-800/80 hover:border-slate-700 transition-all duration-300 shadow-lg hover:shadow-cyan-950/20"
             >
               {/* Destination Photo */}
               <img
