@@ -10,11 +10,11 @@ function generateSmartItinerary(
   interests: string[]
 ) {
   const dailyRates: Record<string, number> = {
-    budget: 350,
-    comfort: 1800,
-    luxury: 6500,
+    budget: 1350,
+    comfort: 4800,
+    luxury: 16000,
   };
-  const rate = dailyRates[budgetTier] || 400;
+  const rate = dailyRates[budgetTier] || 1350;
 
   const interestText = interests.length > 0 ? interests.join(', ') : 'heritage, culture, and nature';
 
@@ -24,9 +24,9 @@ function generateSmartItinerary(
       morning: `Arrive in ${placeName}, check in to stay, and refresh. Take a morning orientation stroll through the historic quarter.`,
       afternoon: `Visit the central landmark and heritage bazaar. Savor authentic regional lunch at a renowned local eatery.`,
       evening: `Head to the most scenic sunset viewpoint. Settle into an ambient open-air café for dinner and local music.`,
-      bf: 'Traditional local chai & specialty breakfast (₹60 - ₹120)',
-      lunch: 'Authentic regional thali meal (₹140 - ₹280)',
-      dinner: 'Rooftop dinner featuring local chef specialties (₹220 - ₹500)',
+      bf: 'Traditional local chai & specialty breakfast (₹80 - ₹150)',
+      lunch: 'Authentic regional thali meal (₹180 - ₹320)',
+      dinner: 'Rooftop dinner featuring local chef specialties (₹280 - ₹550)',
       tip: 'Start early around 7:30 AM to explore before midday heat and peak crowd hours.',
     },
     {
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
 
         const prompt = `You are Voyage, the premier AI travel assistant for India.
 Generate a realistic, detailed ${days}-day travel itinerary for ${placeName}, India.
-Budget tier: ${budgetTier} (budget: ₹250-600/day, comfort: ₹1500-2500/day, luxury: ₹5000-10000/day).
+Budget tier: ${budgetTier} (budget: ₹1,200-1,800/day covering hostel dorm, 3 meals, and transit; comfort: ₹4,000-6,500/day covering 3-star AC room, dining, and cabs; luxury: ₹13,000-25,000/day covering premium resort, fine dining, and chauffeur cab).
 Travel style: ${travelStyle}.
 Interests: ${interests.join(', ')}.
 

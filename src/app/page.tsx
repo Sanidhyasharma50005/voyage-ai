@@ -164,6 +164,7 @@ export default function HomePage() {
 
   // User Geolocation state for "Near Me" (Default to Gwalior coordinates: 26.2298, 78.1734)
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>({ lat: 26.2298, lon: 78.1734 });
+  const [isDefaultLocation, setIsDefaultLocation] = useState<boolean>(true);
 
   // On mount or user change: load itineraries from PostgreSQL or localStorage
   useEffect(() => {
@@ -243,8 +244,10 @@ export default function HomePage() {
     days: number,
     budgetTier: 'budget' | 'comfort' | 'luxury'
   ) => {
-    const formattedDates = `${days} Days (${destination.bestSeason.split('(')[0].split('&')[0].trim()})`;
-    const title = plan.title || `${days}-Day ${budgetTier.toUpperCase()} Voyage: ${destination.name.split(' ')[0]}`;
+    const cleanSeason = destination.bestSeason.replace(/\s*\([^)]*\)/g, '').trim();
+    const cleanName = destination.aliases?.[0] || destination.name.replace(/\s*\([^)]*\)/g, '').trim();
+    const formattedDates = `${days} Days (${cleanSeason || destination.bestSeason})`;
+    const title = plan.title || `${days}-Day ${budgetTier.toUpperCase()} Voyage: ${cleanName}`;
     const totalCost = plan.totalEstimatedCost || (destination.dailyCostBudget * days);
 
     if (user) {
@@ -255,7 +258,7 @@ export default function HomePage() {
           .insert({
             user_id: user.id,
             destination_id: destination.id,
-            destination_name: destination.name.split('&')[0].trim(),
+            destination_name: destination.name,
             title,
             days_count: days,
             budget_tier: budgetTier,
@@ -284,7 +287,7 @@ export default function HomePage() {
             plan: data.plan_data as TripPlan,
           };
           setSavedTrips((prev) => [newTrip, ...prev]);
-          setSaveToast(`🎉 Cloud Synced! Your ${days}-day plan for ${destination.name.split(' ')[0]} is saved to PostgreSQL!`);
+          setSaveToast(`🎉 Cloud Synced! Your ${days}-day plan for ${cleanName} is saved to PostgreSQL!`);
           setTimeout(() => setSaveToast(null), 5000);
           return;
         }
@@ -297,7 +300,7 @@ export default function HomePage() {
     const localTrip: SavedTrip = {
       id: 'trip_' + Date.now(),
       destinationId: destination.id,
-      destinationName: destination.name.split('&')[0].trim(),
+      destinationName: destination.name,
       title,
       daysCount: days,
       budgetTier: budgetTier,
@@ -340,14 +343,17 @@ export default function HomePage() {
   const handleRequestLocation = () => {
     if (!navigator.geolocation) {
       setUserLocation({ lat: 26.2298, lon: 78.1734 });
+      setIsDefaultLocation(true);
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setUserLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        setIsDefaultLocation(false);
       },
       () => {
         setUserLocation({ lat: 26.2298, lon: 78.1734 });
+        setIsDefaultLocation(true);
       }
     );
   };
@@ -867,19 +873,34 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-teal-950/40 border border-teal-800/40 flex items-center justify-between text-xs text-teal-200">
-                <div className="flex items-center gap-2">
-                  <Navigation2 className="w-4 h-4 text-teal-400 animate-pulse" />
-                  <span>
-                    {userLocation
-                      ? `Active GPS: (${userLocation.lat.toFixed(2)}°N, ${userLocation.lon.toFixed(2)}°E) • Destinations sorted closest to farthest`
-                      : 'Requesting GPS access to calculate distances...'}
-                  </span>
+              {isDefaultLocation ? (
+                <div className="p-4 rounded-2xl bg-amber-950/40 border border-amber-700/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-200">
+                  <div className="flex items-center gap-2.5">
+                    <MapPin className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>
+                      <strong>Using default location:</strong> Gwalior, MP (26.23°N, 78.17°E) • Enable GPS or tap below to calculate live distance from your city.
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleRequestLocation}
+                    className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs shrink-0 self-start sm:self-auto transition-colors"
+                  >
+                    Enable Live GPS
+                  </button>
                 </div>
-                <button onClick={handleRequestLocation} className="text-xs font-bold text-[#d4f938] hover:underline">
-                  Recalculate GPS
-                </button>
-              </div>
+              ) : (
+                <div className="p-4 rounded-2xl bg-teal-950/40 border border-teal-800/40 flex items-center justify-between text-xs text-teal-200">
+                  <div className="flex items-center gap-2">
+                    <Navigation2 className="w-4 h-4 text-teal-400 animate-pulse" />
+                    <span>
+                      🎯 <strong>Live GPS Active:</strong> ({userLocation?.lat.toFixed(2)}°N, {userLocation?.lon.toFixed(2)}°E) • Destinations sorted closest to farthest
+                    </span>
+                  </div>
+                  <button onClick={handleRequestLocation} className="text-xs font-bold text-[#d4f938] hover:underline">
+                    Recalculate GPS
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

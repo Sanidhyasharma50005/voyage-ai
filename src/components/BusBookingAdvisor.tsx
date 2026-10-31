@@ -256,7 +256,7 @@ export function BusBookingAdvisor({ initialDestination, userCoords }: BusBooking
     const redbusDateStr = `${d}-${monthStr}-${y}`;
 
     const redbusUrl = `https://www.redbus.in/bus-tickets/${encodeURIComponent(fromCitySlug)}-to-${encodeURIComponent(toCitySlug)}?fromCityName=${encodeURIComponent(fromCityClean)}&toCityName=${encodeURIComponent(toCityClean)}&onward=${redbusDateStr}`;
-    const abhibusUrl = `https://www.abhibus.com/buses/${encodeURIComponent(fromCitySlug)}/${encodeURIComponent(toCitySlug)}`;
+    const abhibusUrl = `https://www.abhibus.com/bus-search?source=${encodeURIComponent(fromCityClean)}&destination=${encodeURIComponent(toCityClean)}&date=${travelDate}`;
 
     return {
       redbusUrl,
@@ -292,7 +292,7 @@ export function BusBookingAdvisor({ initialDestination, userCoords }: BusBooking
           </div>
           {initialDestination && (
             <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-200 text-xs font-mono">
-              <span>Destination: {initialDestination.name.split('&')[0]}</span>
+              <span>Destination: {initialDestination.name.replace(/\s*\([^)]*\)/g, '').trim()}</span>
             </div>
           )}
         </div>

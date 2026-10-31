@@ -282,9 +282,9 @@ export function AiPlannerModal({
               <div className="grid grid-cols-3 gap-2">
                 {(
                   [
-                    { id: 'budget', label: 'Budget', sub: '₹248 - 600/d' },
-                    { id: 'comfort', label: 'Comfort', sub: '₹1.5k - 2.5k/d' },
-                    { id: 'luxury', label: 'Luxury', sub: '₹5k - 10k/d' },
+                    { id: 'budget', label: 'Budget', sub: '₹1.2k - 1.9k/d' },
+                    { id: 'comfort', label: 'Comfort', sub: '₹4.2k - 7.5k/d' },
+                    { id: 'luxury', label: 'Luxury', sub: '₹13k - 28k/d' },
                   ] as const
                 ).map((tier) => (
                   <button

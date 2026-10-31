@@ -22,6 +22,12 @@ interface DestinationCardProps {
   distanceKm?: number | null;
 }
 
+function formatSeasonSummary(season: string): string {
+  if (!season) return 'All Year';
+  const clean = season.replace(/\s*\([^)]*\)/g, '').trim();
+  return clean.replace(/&$/, '').trim() || season;
+}
+
 export function DestinationCard({
   destination,
   isFavorite,
@@ -79,8 +85,11 @@ export function DestinationCard({
       {/* Info details */}
       <div className="flex-1 min-w-0 space-y-1.5">
         <div className="flex items-start justify-between gap-1">
-          <h4 className="font-bold text-sm text-white truncate group-hover:text-cyan-300 transition-colors">
-            {destination.name.split('&')[0].trim()}
+          <h4
+            className="font-bold text-sm text-white truncate group-hover:text-cyan-300 transition-colors"
+            title={destination.name}
+          >
+            {destination.name}
           </h4>
           <div className="flex items-center gap-1 text-xs text-amber-400 shrink-0">
             <Star className="w-3 h-3 fill-amber-400" />
@@ -110,10 +119,10 @@ export function DestinationCard({
           </div>
 
           <span
-            className="text-[11px] text-slate-400 hidden sm:inline max-w-[140px] truncate"
+            className="text-[11px] text-slate-400 hidden sm:inline max-w-[150px] truncate"
             title={destination.bestSeason}
           >
-            Best: {destination.bestSeason.split('(')[0].split('&')[0].trim()}
+            Best: {formatSeasonSummary(destination.bestSeason)}
           </span>
         </div>
       </div>

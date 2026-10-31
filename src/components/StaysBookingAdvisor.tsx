@@ -193,7 +193,7 @@ export function StaysBookingAdvisor({ initialDestination, userCoords }: StaysBoo
           </div>
           {initialDestination && (
             <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-mono">
-              <span>Destination: {initialDestination.name.split('&')[0]}</span>
+              <span>Destination: {initialDestination.name.replace(/\s*\([^)]*\)/g, '').trim()}</span>
             </div>
           )}
         </div>

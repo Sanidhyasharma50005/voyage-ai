@@ -275,7 +275,7 @@ export function FlightBookingAdvisor({ initialDestination, userCoords }: FlightB
           </div>
           {initialDestination && (
             <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-200 text-xs font-mono">
-              <span>Destination: {initialDestination.name.split('&')[0]}</span>
+              <span>Destination: {initialDestination.name.replace(/\s*\([^)]*\)/g, '').trim()}</span>
             </div>
           )}
         </div>

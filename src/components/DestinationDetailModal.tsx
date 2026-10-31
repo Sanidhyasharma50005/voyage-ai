@@ -223,7 +223,7 @@ export function DestinationDetailModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {destination.hostels.map((h, i) => {
-                const cityName = destination.name.split('&')[0].split(' ')[0].trim();
+                const cityName = destination.aliases?.[0] || destination.name.replace(/\s*\([^)]*\)/g, '').trim();
                 const bookingComUrl = buildBookingComUrl(cityName);
                 const makeMyTripUrl = buildMakeMyTripUrl(cityName);
 
@@ -285,7 +285,7 @@ export function DestinationDetailModal({
                 className="w-full py-2 px-3 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <Hotel className="w-3.5 h-3.5" />
-                <span>Search All Hotels, Dorms &amp; Hostels in {destination.name.split(' ')[0]} →</span>
+                <span>Search All Hotels, Dorms &amp; Hostels in {destination.aliases?.[0] || destination.name.replace(/\s*\([^)]*\)/g, '').trim()} →</span>
               </button>
             )}
           </div>

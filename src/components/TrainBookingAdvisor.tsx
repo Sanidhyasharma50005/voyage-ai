@@ -180,7 +180,7 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
   // Destination name string for titles & alerts
   const destDisplayName = useMemo(() => {
     if (destinationMode === 'holiday') {
-      return `${selectedDest.name.split('&')[0].trim()} (${effectiveDestStation.c})`;
+      return `${selectedDest.name.replace(/\s*\([^)]*\)/g, '').trim()} (${effectiveDestStation.c})`;
     }
     return `${destStation.n} (${destStation.c})`;
   }, [destinationMode, selectedDest, effectiveDestStation, destStation]);
@@ -354,7 +354,7 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
           </div>
           {initialDestination && (
             <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-mono">
-              <span>Trip to: {initialDestination.name.split('&')[0]}</span>
+              <span>Trip to: {initialDestination.name.replace(/\s*\([^)]*\)/g, '').trim()}</span>
             </div>
           )}
         </div>
@@ -494,7 +494,7 @@ export function TrainBookingAdvisor({ initialDestination, userCoords, initialMod
                 >
                   {DESTINATIONS.filter((d) => d.country === 'India').map((d) => (
                     <option key={d.id} value={d.id}>
-                      {d.name.split('&')[0].trim()} ({d.state})
+                      {d.name.replace(/\s*\([^)]*\)/g, '').trim()} ({d.state})
                     </option>
                   ))}
                 </select>
