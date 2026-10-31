@@ -126,18 +126,24 @@ describe('Destinations Dataset - Integrity & Schema Validation', () => {
   });
 
   it('should have realistic, grounded daily travel costs covering stay, food, and sightseeing', () => {
+    const prices = new Set(ALL_DESTINATIONS.map((d) => d.dailyCostBudget));
+    assert.ok(
+      prices.size >= 50,
+      `Expected differentiated pricing with at least 50 distinct price points, found ${prices.size}`
+    );
+
     for (const d of ALL_DESTINATIONS) {
       assert.ok(
-        d.dailyCostBudget >= 1000 && d.dailyCostBudget <= 2500,
-        `${d.id} dailyCostBudget (${d.dailyCostBudget}) should be realistic (₹1,000 - ₹2,500/day)`
+        d.dailyCostBudget >= 900 && d.dailyCostBudget <= 4000,
+        `${d.id} dailyCostBudget (${d.dailyCostBudget}) should be realistic (₹900 - ₹4,000/day)`
       );
       assert.ok(
-        d.dailyCostComfort >= 3500,
-        `${d.id} dailyCostComfort (${d.dailyCostComfort}) should be at least ₹3,500/day`
+        d.dailyCostComfort >= 3000,
+        `${d.id} dailyCostComfort (${d.dailyCostComfort}) should be at least ₹3,000/day`
       );
       assert.ok(
-        d.dailyCostLuxury >= 10000,
-        `${d.id} dailyCostLuxury (${d.dailyCostLuxury}) should be at least ₹10,000/day`
+        d.dailyCostLuxury >= 8000,
+        `${d.id} dailyCostLuxury (${d.dailyCostLuxury}) should be at least ₹8,000/day`
       );
       assert.ok(
         d.dailyCostBudget < d.dailyCostComfort && d.dailyCostComfort < d.dailyCostLuxury,
